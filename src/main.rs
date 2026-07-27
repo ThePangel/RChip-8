@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use std::{env, error::Error};
 
 use pixels::{Pixels, SurfaceTexture};
@@ -15,10 +16,16 @@ struct App {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
     chip8: chip8::Chip8,
+    last_cycle: Instant,
 }
 impl ApplicationHandler for App {
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
-        self.chip8.cycle();
+        let now = Instant::now();
+
+        if now.duration_since(self.last_cycle) >= Duration::from_micros(1_000_000 / 700) {
+            self.chip8.cycle();
+            self.last_cycle = now;
+        }
 
         if let Some(window) = &self.window {
             if self.chip8.draw_flag {
@@ -96,6 +103,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         window: None,
         pixels: None,
         chip8,
+        last_cycle: Instant::now(),
     };
 
     event_loop.run_app(&mut app)?;
