@@ -1,4 +1,6 @@
-use std::{error::Error, fs::File, io::Read};
+use std::{error::Error, fs::File, hint::select_unpredictable, io::Read};
+
+use rand::random_range;
 
 const RAM_SIZE: usize = 4096;
 const FONTSET_SIZE: usize = 80;
@@ -88,7 +90,11 @@ impl Chip8 {
 
         let nnn = opcode & 0xFFF;
         let nn = (opcode & 0xFF) as u8;
-        let n = (opcode & 0xF) as u8;
+        let n: u8 = (opcode & 0xF) as u8;
+
+        let vx = self.registers[x];
+        let vy = self.registers[y];
+        let i = self.address_register as usize;
 
         match (prefix, x, y, end) {
             (0x0, 0x0, 0xE, 0x0) => todo!("Screen handling"),
@@ -100,19 +106,19 @@ impl Chip8 {
             (0x2, _, _, _) => todo!("handle call subroutine"),
 
             (0x3, _, _, _) => {
-                if self.registers[x] == self.memory[nn as usize] {
+                if vx == self.memory[nn as usize] {
                     self.pc += 1
                 }
             }
 
             (0x4, _, _, _) => {
-                if self.registers[x] != self.memory[nn as usize] {
+                if vx != self.memory[nn as usize] {
                     self.pc += 1
                 }
             }
 
             (0x5, _, _, _) => {
-                if self.registers[x] == self.registers[y] {
+                if vx == vy {
                     self.pc += 1
                 }
             }
@@ -121,22 +127,100 @@ impl Chip8 {
 
             (0x7, _, _, _) => self.registers[x] += nn,
 
-            (0x8, _, _, 0x0) => self.registers[x] = self.registers[y],
+            (0x8, _, _, 0x0) => self.registers[x] = vy,
 
-            (0x8, _, _, 0x1) => self.registers[x] = self.registers[x] | self.registers[y],
+            (0x8, _, _, 0x1) => self.registers[x] = vx | vy,
 
-            (0x8, _, _, 0x2) => self.registers[x] = self.registers[x] & self.registers[y],
+            (0x8, _, _, 0x2) => self.registers[x] = vx & vy,
 
-            (0x8, _, _, 0x3) => self.registers[x] = self.registers[x] ^ self.registers[y],
+            (0x8, _, _, 0x3) => self.registers[x] = vx ^ vy,
 
-            (0x9, _, _, 0x4) => match self.registers[x].checked_add(self.registers[y]) {
+            (0x8, _, _, 0x4) => match vx.checked_add(vy) {
                 Some(sum) => {
                     self.registers[x] = sum;
                     self.registers[0xF] = 0
                 }
                 None => {
-                    self.registers[x] = self.registers[x] + self.registers[y];
+                    self.registers[x] = vx + vy;
                     self.registers[0xF] = 1
+                }
+            },
+
+            (0x8, _, _, 0x5) => {
+                if vx >= vy {
+                    self.registers[0xF] = 1
+                } else {
+                    self.registers[0xF] = 0
+                }
+
+                self.registers[x] -= vy
+            }
+
+            (0x8, _, _, 0x6) => {
+                self.registers[0xF] = vx & 0x1;
+                self.registers[x] >>= 1
+            }
+
+            (0x8, _, _, 0x7) => {
+                if vy >= vx {
+                    self.registers[0xF] = 1
+                } else {
+                    self.registers[0xF] = 0
+                }
+
+                self.registers[x] = vy - vx
+            }
+
+            (0x8, _, _, 0xE) => {
+                self.registers[0xF] = vx & 0xFE;
+                self.registers[x] <<= 1
+            }
+
+            (0x9, _, _, 0x0) => {
+                if vx != vy {
+                    self.pc += 1
+                }
+            }
+
+            (0xA, _, _, _) => self.address_register = nnn,
+
+            (0xB, _, _, _) => self.pc = self.registers[0x0] as u16 + nnn,
+
+            (0xC, _, _, _) => self.registers[x] = random_range(0..255) & nn,
+
+            (0xD, _, _, _) => todo!("screen draw"),
+
+            (0xE, _, 0x9, 0xE) => todo!("key pressed logic"),
+
+            (0xE, _, 0xA, 0x1) => todo!("key unpressed logic"),
+
+            (0xF, _, 0x0, 0x7) => self.registers[x] = self.d_timer,
+
+            (0xF, _, 0x0, 0xA) => todo!("key await logic"),
+
+            (0xF, _, 0x1, 0x5) => self.d_timer = vx,
+
+            (0xF, _, 0x1, 0x8) => self.s_timer = vx,
+
+            (0xF, _, 0x1, 0xE) => self.address_register += vx as u16,
+
+            (0xF, _, 0x2, 0x9) => self.address_register = 0x50 + (5 * vx) as u16,
+
+            (0xF, _, 0x3, 0x3) => {
+                self.memory[i + 2] = vx % 10;
+                self.memory[i + 1] = (vx / 10) % 10;
+                self.memory[i] = vx / 100;
+            }
+
+            (0xF, _, 0x5, 0x5) => {
+                for register in 0..=x {
+                    self.memory[i + register] = self.registers[register]
+                }
+            },
+
+            (0xF, _, 0x6, 0x5) => {
+                for register in 0..=x {
+                    self.registers[register] = self.memory[i + register]
                 }
             },
 
