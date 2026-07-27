@@ -1,7 +1,6 @@
-use std::{error::Error, fs::File, hint::select_unpredictable, io::Read};
+use std::{error::Error, fs::File, io::Read};
 
 use rand::random_range;
-use crate::display;
 
 const RAM_SIZE: usize = 4096;
 const FONTSET_SIZE: usize = 80;

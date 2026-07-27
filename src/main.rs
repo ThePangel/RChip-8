@@ -1,13 +1,12 @@
 use std::sync::Arc;
 use std::{env, error::Error};
 
-use pixels::wgpu::wgc::command::AttachmentErrorLocation::Color;
 use pixels::{Pixels, SurfaceTexture};
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{self, Window, WindowId};
+use winit::window::{Window, WindowId};
 
 mod chip8;
 mod display;
@@ -46,7 +45,7 @@ impl ApplicationHandler for App {
             self.pixels = Some(pixels);
         }
     }
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => {
                 println!("Closing...");
