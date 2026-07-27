@@ -1,6 +1,7 @@
 use std::{error::Error, fs::File, hint::select_unpredictable, io::Read};
 
 use rand::random_range;
+use crate::display;
 
 const RAM_SIZE: usize = 4096;
 const FONTSET_SIZE: usize = 80;
@@ -40,6 +41,10 @@ pub struct Chip8 {
     pub d_timer: u8,
 
     pub s_timer: u8,
+
+    pub display_buffer: [bool; 64 * 32],
+
+    pub draw_flag: bool,
 }
 
 impl Chip8 {
@@ -57,6 +62,8 @@ impl Chip8 {
             sp: (0),
             d_timer: (0),
             s_timer: (0),
+            display_buffer: ([false; 64 * 32]),
+            draw_flag: false
         }
     }
 
@@ -64,7 +71,7 @@ impl Chip8 {
         let mut file = File::open(file_path)?;
 
         if file.metadata()?.len() > RAM_SIZE as u64 {
-            return Err("ROM to large to fit inside the Chip8 memory".into());
+            return Err(("ROM to large to fit inside the Chip8 memory").into());
         } else {
             let start_memory = &mut self.memory[0x200..];
 
@@ -75,6 +82,7 @@ impl Chip8 {
     }
 
     pub fn cycle(&mut self) {
+       
         let opcode = (self.memory[self.pc as usize] as u16) << 8
             | (self.memory[(self.pc + 1) as usize] as u16);
         self.pc += 2;
@@ -97,7 +105,10 @@ impl Chip8 {
         let i = self.address_register as usize;
 
         match (prefix, x, y, end) {
-            (0x0, 0x0, 0xE, 0x0) => todo!("Screen handling"),
+            (0x0, 0x0, 0xE, 0x0) => {
+                self.display_buffer = [false; 64 * 32];
+                self.draw_flag = true;
+            }
 
             (0x0, 0x0, 0xE, 0xE) => todo!("Handle return subroutine"),
 
@@ -188,7 +199,32 @@ impl Chip8 {
 
             (0xC, _, _, _) => self.registers[x] = random_range(0..255) & nn,
 
-            (0xD, _, _, _) => todo!("screen draw"),
+            (0xD, _, _, _) => {
+                let mut is_flipped = false;
+
+                for row in 0..n {
+                    for pixel in 0..8 {
+                        let x = (vx as usize + pixel as usize) % 64;
+                        let y = (vy as usize + row as usize) % 32;
+                        let index = (y * 64) + x;
+
+                        if self.memory[i + row as usize] & (0x80 >> pixel) != 0 {
+                            if self.display_buffer[index as usize] == true {
+                                is_flipped = true;
+                            }
+
+                            self.display_buffer[index as usize] ^= true
+                        }
+                    }
+                }
+                if is_flipped {
+                    self.registers[0xF] = 1
+                } else {
+                    self.registers[0xF] = 0
+                }
+                self.draw_flag = true;
+            
+            }
 
             (0xE, _, 0x9, 0xE) => todo!("key pressed logic"),
 
@@ -216,14 +252,15 @@ impl Chip8 {
                 for register in 0..=x {
                     self.memory[i + register] = self.registers[register]
                 }
-            },
+            }
 
             (0xF, _, 0x6, 0x5) => {
                 for register in 0..=x {
                     self.registers[register] = self.memory[i + register]
                 }
-            },
+            }
 
+            (0x0, 0x0, 0x0, 0x0) => return,
             _ => eprintln!("Unknown opcode: {:x}", opcode),
         }
     }
