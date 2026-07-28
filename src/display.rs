@@ -1,15 +1,16 @@
 use std::{
-    sync::Arc,
-    time::{Duration, Instant},
+    io::{self, Write}, sync::Arc, time::{Duration, Instant},
 };
-
 use pixels::{Pixels, SurfaceTexture};
 use winit::{
     application::ApplicationHandler,
     dpi::LogicalSize,
     event::WindowEvent,
     event_loop::ActiveEventLoop,
-    keyboard::PhysicalKey::{self, Code},
+    keyboard::{
+        KeyCode::{Enter, Escape},
+        PhysicalKey::{self},
+    },
     window::{Window, WindowId},
 };
 
@@ -19,15 +20,24 @@ pub struct App {
     pub window: Option<Arc<Window>>,
     pub pixels: Option<Pixels<'static>>,
     pub chip8: chip8::Chip8,
-    pub last_cycle: Instant,
+    pub cycle: Instant,
 }
 impl ApplicationHandler for App {
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         let now = Instant::now();
 
-        if now.duration_since(self.last_cycle) >= Duration::from_micros(1_000_000 / 700) {
-            self.chip8.cycle();
-            self.last_cycle = now;
+        if now.duration_since(self.cycle) >= Duration::from_micros(1_000_000 / 60) {
+            for _ in 0..12 {
+                self.chip8.cycle();
+            }
+
+            if self.chip8.d_timer > 0 {
+                self.chip8.d_timer -= 1
+            }
+            if self.chip8.s_timer > 0 {
+                self.chip8.s_timer -= 1
+            }
+            self.cycle = now;
         }
 
         if let Some(window) = &self.window {
@@ -98,6 +108,19 @@ impl ApplicationHandler for App {
                 is_synthetic: _,
             } => {
                 if let PhysicalKey::Code(key_code) = event.physical_key {
+                    if key_code == Escape {
+                        event_loop.exit();
+                    } else if key_code == Enter {
+                        self.chip8.pc = 0x200;
+                        self.chip8.address_register = 0;
+                        self.chip8.d_timer = 0;
+                        self.chip8.s_timer = 0;
+                        self.chip8.address_register = 0;
+                        self.chip8.registers = [0; 16];
+                        self.chip8.sp = 0;
+                        self.chip8.stack = [0; 12];
+                        self.chip8.display_buffer = [false; 64 * 32];
+                    }
                     if let Some(key_index) = KEYMAP.iter().position(|k| *k == key_code) {
                         self.chip8.keys[key_index] = event.state.is_pressed();
                     }

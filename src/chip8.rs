@@ -1,7 +1,7 @@
 use std::{error::Error, fs::File, io::Read};
 
 use rand::random_range;
-use winit::keyboard::{Key, KeyCode};
+use winit::keyboard::KeyCode;
 
 const RAM_SIZE: usize = 4096;
 const FONTSET_SIZE: usize = 80;
@@ -145,13 +145,13 @@ impl Chip8 {
             }
 
             (0x3, _, _, _) => {
-                if vx == self.memory[nn as usize] {
+                if vx == nn {
                     self.pc += 2
                 }
             }
 
             (0x4, _, _, _) => {
-                if vx != self.memory[nn as usize] {
+                if vx != nn {
                     self.pc += 2
                 }
             }
@@ -211,7 +211,7 @@ impl Chip8 {
             }
 
             (0x8, _, _, 0xE) => {
-                self.registers[0xF] = vx & 0xFE;
+                self.registers[0xF] = vx & 0x80;
                 self.registers[x] <<= 1
             }
 
@@ -225,7 +225,7 @@ impl Chip8 {
 
             (0xB, _, _, _) => self.pc = (self.registers[0x0] as u16).wrapping_add(nnn),
 
-            (0xC, _, _, _) => self.registers[x] = random_range(0..255) & nn,
+            (0xC, _, _, _) => self.registers[x] = random_range(0..=255) & nn,
 
             (0xD, _, _, _) => {
                 let mut is_flipped = false;

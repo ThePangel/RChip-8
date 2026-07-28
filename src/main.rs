@@ -26,7 +26,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         window: None,
         pixels: None,
         chip8,
-        last_cycle: Instant::now(),
+        cycle: Instant::now(),
+        
     };
 
     event_loop.run_app(&mut app)?;
