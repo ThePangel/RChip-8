@@ -1,7 +1,8 @@
-use std::{
-    io::{self, Write}, sync::Arc, time::{Duration, Instant},
-};
 use pixels::{Pixels, SurfaceTexture};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use winit::{
     application::ApplicationHandler,
     dpi::LogicalSize,
