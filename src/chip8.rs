@@ -62,7 +62,7 @@ impl Chip8 {
             d_timer: (0),
             s_timer: (0),
             display_buffer: ([false; 64 * 32]),
-            draw_flag: false
+            draw_flag: false,
         }
     }
 
@@ -81,11 +81,10 @@ impl Chip8 {
     }
 
     pub fn cycle(&mut self) {
-       
         let opcode = (self.memory[self.pc as usize] as u16) << 8
             | (self.memory[(self.pc + 1) as usize] as u16);
         self.pc += 2;
-    
+
         self.exec_opcode(opcode);
     }
 
@@ -110,9 +109,9 @@ impl Chip8 {
             }
 
             (0x0, 0x0, 0xE, 0xE) => {
-                self.sp -=1;
+                self.sp -= 1;
                 self.pc = self.stack[self.sp as usize];
-            },
+            }
 
             (0x1, _, _, _) => self.pc = nnn,
 
@@ -120,12 +119,12 @@ impl Chip8 {
                 self.stack[self.sp as usize] = self.pc;
                 self.sp += 1;
                 self.pc = nnn;
-            },
+            }
 
             (0x3, _, _, _) => {
                 if vx == self.memory[nn as usize] {
                     self.pc += 2
-                }   
+                }
             }
 
             (0x4, _, _, _) => {
@@ -229,7 +228,6 @@ impl Chip8 {
                     self.registers[0xF] = 0
                 }
                 self.draw_flag = true;
-            
             }
 
             (0xE, _, 0x9, 0xE) => todo!("key pressed logic"),

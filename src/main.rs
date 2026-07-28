@@ -6,7 +6,6 @@ use winit::event_loop::{ControlFlow, EventLoop};
 mod chip8;
 mod display;
 
-
 fn main() -> Result<(), Box<dyn Error>> {
     let event_loop = EventLoop::new().unwrap();
 
