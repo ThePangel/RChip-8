@@ -9,10 +9,11 @@ use winit::{
     dpi::LogicalSize,
     event::WindowEvent,
     event_loop::ActiveEventLoop,
+    keyboard::PhysicalKey::{self, Code},
     window::{Window, WindowId},
 };
 
-use crate::chip8;
+use crate::chip8::{self, KEYMAP};
 
 pub struct App {
     pub window: Option<Arc<Window>>,
@@ -91,6 +92,18 @@ impl ApplicationHandler for App {
                     event_loop.exit();
                 }
             }
+            WindowEvent::KeyboardInput {
+                device_id: _,
+                event,
+                is_synthetic: _,
+            } => {
+                if let PhysicalKey::Code(key_code) = event.physical_key {
+                    if let Some(key_index) = KEYMAP.iter().position(|k| *k == key_code) {
+                        self.chip8.keys[key_index] = event.state.is_pressed();
+                    }
+                }
+            }
+
             _ => (),
         }
     }

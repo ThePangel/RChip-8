@@ -1,6 +1,7 @@
 use std::{error::Error, fs::File, io::Read};
 
 use rand::random_range;
+use winit::keyboard::{Key, KeyCode};
 
 const RAM_SIZE: usize = 4096;
 const FONTSET_SIZE: usize = 80;
@@ -24,6 +25,25 @@ const FONTSET: [u8; FONTSET_SIZE] = [
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
 
+pub const KEYMAP: [KeyCode; 16] = [
+    KeyCode::Digit1,
+    KeyCode::Digit2,
+    KeyCode::Digit3,
+    KeyCode::Digit4,
+    KeyCode::KeyQ,
+    KeyCode::KeyW,
+    KeyCode::KeyE,
+    KeyCode::KeyR,
+    KeyCode::KeyA,
+    KeyCode::KeyS,
+    KeyCode::KeyD,
+    KeyCode::KeyF,
+    KeyCode::KeyZ,
+    KeyCode::KeyX,
+    KeyCode::KeyC,
+    KeyCode::KeyV,
+];
+
 pub struct Chip8 {
     pub memory: [u8; RAM_SIZE],
 
@@ -44,6 +64,8 @@ pub struct Chip8 {
     pub display_buffer: [bool; 64 * 32],
 
     pub draw_flag: bool,
+
+    pub keys: [bool; 16],
 }
 
 impl Chip8 {
@@ -53,16 +75,17 @@ impl Chip8 {
         memory[0x50..0x50 + FONTSET.len()].copy_from_slice(&FONTSET);
 
         Chip8 {
-            memory: (memory),
-            registers: ([0; 16]),
-            address_register: (0),
-            stack: ([0; 12]),
-            pc: (0x200),
-            sp: (0),
-            d_timer: (0),
-            s_timer: (0),
-            display_buffer: ([false; 64 * 32]),
+            memory: memory,
+            registers: [0; 16],
+            address_register: 0,
+            stack: [0; 12],
+            pc: 0x200,
+            sp: 0,
+            d_timer: 0,
+            s_timer: 0,
+            display_buffer: [false; 64 * 32],
             draw_flag: false,
+            keys: [false; 16],
         }
     }
 
@@ -230,13 +253,35 @@ impl Chip8 {
                 self.draw_flag = true;
             }
 
-            (0xE, _, 0x9, 0xE) => todo!("key pressed logic"),
+            (0xE, _, 0x9, 0xE) => {
+                if self.keys[(self.registers[x] & 0x0F) as usize] {
+                    self.pc += 2
+                }
+            }
 
-            (0xE, _, 0xA, 0x1) => todo!("key unpressed logic"),
+            (0xE, _, 0xA, 0x1) => {
+                if !self.keys[(self.registers[x] & 0x0F) as usize] {
+                    self.pc += 2
+                }
+            }
 
             (0xF, _, 0x0, 0x7) => self.registers[x] = self.d_timer,
 
-            (0xF, _, 0x0, 0xA) => todo!("key await logic"),
+            (0xF, _, 0x0, 0xA) => {
+                let mut key_pressed = false;
+
+                for (i, &value) in self.keys.iter().enumerate() {
+                    if value {
+                        self.registers[x] = i as u8;
+                        key_pressed = true;
+                        break;
+                    }
+                }
+
+                if !key_pressed {
+                    self.pc -= 2;
+                }
+            }
 
             (0xF, _, 0x1, 0x5) => self.d_timer = vx,
 
