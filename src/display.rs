@@ -1,7 +1,16 @@
-use std::{sync::Arc, time::{Duration, Instant}};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use pixels::{Pixels, SurfaceTexture};
-use winit::{application::ApplicationHandler, dpi::LogicalSize, event::WindowEvent, event_loop::ActiveEventLoop, window::{Window, WindowId}};
+use winit::{
+    application::ApplicationHandler,
+    dpi::LogicalSize,
+    event::WindowEvent,
+    event_loop::ActiveEventLoop,
+    window::{Window, WindowId},
+};
 
 use crate::chip8;
 
@@ -45,12 +54,22 @@ impl ApplicationHandler for App {
             self.pixels = Some(pixels);
         }
     }
+
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => {
                 println!("Closing...");
                 event_loop.exit();
             }
+            WindowEvent::Resized(size) => {
+                if let Some(pixels) = self.pixels.as_mut() {
+                    if let Err(err) = pixels.resize_surface(size.width, size.height) {
+                        eprintln!("Failed to resize surface: {err}");
+                        event_loop.exit();
+                    }
+                }
+            }
+
             WindowEvent::RedrawRequested => {
                 let frame = self.pixels.as_mut().unwrap().frame_mut();
 
