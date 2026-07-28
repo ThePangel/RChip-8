@@ -85,7 +85,7 @@ impl Chip8 {
         let opcode = (self.memory[self.pc as usize] as u16) << 8
             | (self.memory[(self.pc + 1) as usize] as u16);
         self.pc += 2;
-
+    
         self.exec_opcode(opcode);
     }
 
@@ -124,25 +124,25 @@ impl Chip8 {
 
             (0x3, _, _, _) => {
                 if vx == self.memory[nn as usize] {
-                    self.pc += 1
-                }
+                    self.pc += 2
+                }   
             }
 
             (0x4, _, _, _) => {
                 if vx != self.memory[nn as usize] {
-                    self.pc += 1
+                    self.pc += 2
                 }
             }
 
             (0x5, _, _, _) => {
                 if vx == vy {
-                    self.pc += 1
+                    self.pc += 2
                 }
             }
 
             (0x6, _, _, _) => self.registers[x] = nn,
 
-            (0x7, _, _, _) => self.registers[x] += nn,
+            (0x7, _, _, _) => self.registers[x] = self.registers[x].wrapping_add(nn),
 
             (0x8, _, _, 0x0) => self.registers[x] = vy,
 
@@ -158,7 +158,7 @@ impl Chip8 {
                     self.registers[0xF] = 0
                 }
                 None => {
-                    self.registers[x] = vx + vy;
+                    self.registers[x] = vx.wrapping_add(vy);
                     self.registers[0xF] = 1
                 }
             },
@@ -170,7 +170,7 @@ impl Chip8 {
                     self.registers[0xF] = 0
                 }
 
-                self.registers[x] -= vy
+                self.registers[x] = self.registers[x].wrapping_sub(vy);
             }
 
             (0x8, _, _, 0x6) => {
@@ -195,13 +195,13 @@ impl Chip8 {
 
             (0x9, _, _, 0x0) => {
                 if vx != vy {
-                    self.pc += 1
+                    self.pc += 2
                 }
             }
 
             (0xA, _, _, _) => self.address_register = nnn,
 
-            (0xB, _, _, _) => self.pc = self.registers[0x0] as u16 + nnn,
+            (0xB, _, _, _) => self.pc = (self.registers[0x0] as u16).wrapping_add(nnn),
 
             (0xC, _, _, _) => self.registers[x] = random_range(0..255) & nn,
 
