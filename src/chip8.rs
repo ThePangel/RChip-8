@@ -109,11 +109,18 @@ impl Chip8 {
                 self.draw_flag = true;
             }
 
-            (0x0, 0x0, 0xE, 0xE) => todo!("Handle return subroutine"),
+            (0x0, 0x0, 0xE, 0xE) => {
+                self.sp -=1;
+                self.pc = self.stack[self.sp as usize];
+            },
 
             (0x1, _, _, _) => self.pc = nnn,
 
-            (0x2, _, _, _) => todo!("handle call subroutine"),
+            (0x2, _, _, _) => {
+                self.stack[self.sp as usize] = self.pc;
+                self.sp += 1;
+                self.pc = nnn;
+            },
 
             (0x3, _, _, _) => {
                 if vx == self.memory[nn as usize] {

@@ -1,13 +1,7 @@
-use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use std::{env, error::Error};
 
-use pixels::{Pixels, SurfaceTexture};
-use winit::application::ApplicationHandler;
-use winit::dpi::LogicalSize;
-use winit::event::WindowEvent;
-use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{Window, WindowId};
+use winit::event_loop::{ControlFlow, EventLoop};
 
 mod chip8;
 mod display;
