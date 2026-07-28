@@ -26,24 +26,23 @@ const FONTSET: [u8; FONTSET_SIZE] = [
 ];
 
 pub const KEYMAP: [KeyCode; 16] = [
-    KeyCode::Digit1,
-    KeyCode::Digit2,
-    KeyCode::Digit3,
-    KeyCode::Digit4,
-    KeyCode::KeyQ,
-    KeyCode::KeyW,
-    KeyCode::KeyE,
-    KeyCode::KeyR,
-    KeyCode::KeyA,
-    KeyCode::KeyS,
-    KeyCode::KeyD,
-    KeyCode::KeyF,
-    KeyCode::KeyZ,
-    KeyCode::KeyX,
-    KeyCode::KeyC,
-    KeyCode::KeyV,
+	KeyCode::KeyX,   // 0x0 -> X
+	KeyCode::Digit1, // 0x1 -> 1
+	KeyCode::Digit2, // 0x2 -> 2
+	KeyCode::Digit3, // 0x3 -> 3
+	KeyCode::KeyQ,   // 0x4 -> Q
+	KeyCode::KeyW,   // 0x5 -> W
+	KeyCode::KeyE,   // 0x6 -> E
+	KeyCode::KeyA,   // 0x7 -> A
+	KeyCode::KeyS,   // 0x8 -> S
+	KeyCode::KeyD,   // 0x9 -> D
+	KeyCode::KeyZ,   // 0xA -> Z
+	KeyCode::KeyC,   // 0xB -> C
+	KeyCode::Digit4, // 0xC -> 4
+	KeyCode::KeyR,   // 0xD -> R
+	KeyCode::KeyF,   // 0xE -> F
+	KeyCode::KeyV,   // 0xF -> V
 ];
-
 pub struct Chip8 {
     pub memory: [u8; RAM_SIZE],
 
@@ -211,7 +210,7 @@ impl Chip8 {
             }
 
             (0x8, _, _, 0xE) => {
-                self.registers[0xF] = vx & 0x80;
+                self.registers[0xF] = (vx >> 7) & 0x1;
                 self.registers[x] <<= 1
             }
 
