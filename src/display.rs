@@ -1,4 +1,5 @@
 use pixels::{Pixels, SurfaceTexture};
+use rodio::Player;
 use std::{
     sync::Arc,
     time::{Duration, Instant},
@@ -22,10 +23,14 @@ pub struct App {
     pub pixels: Option<Pixels<'static>>,
     pub chip8: chip8::Chip8,
     pub cycle: Instant,
+    pub player: Player,
 }
 impl ApplicationHandler for App {
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         let now = Instant::now();
+
+        let source = rodio::source::SineWave::new(440.0);
+        self.player.append(source);
 
         if now.duration_since(self.cycle) >= Duration::from_micros(1_000_000 / 60) {
             for _ in 0..12 {
@@ -36,7 +41,10 @@ impl ApplicationHandler for App {
                 self.chip8.d_timer -= 1
             }
             if self.chip8.s_timer > 0 {
+                self.player.play();
                 self.chip8.s_timer -= 1
+            } else {
+                self.player.pause();
             }
             self.cycle = now;
         }
@@ -70,7 +78,6 @@ impl ApplicationHandler for App {
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::CloseRequested => {
-                println!("Closing...");
                 event_loop.exit();
             }
             WindowEvent::Resized(size) => {
