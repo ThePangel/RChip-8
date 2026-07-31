@@ -21,21 +21,6 @@ The project uses a minimal set of libraries:
 
 ## Running
 
-### Cargo
-
-The emulator is also available in the crates.io repository.
-
-Install the emulator:
-```bash
-cargo install rchip-8
-```
-
-Run the installed crate and pass the ROM path as the first command-line argument:
-
-```bash
-rchip-8 path/to/rom
-```
-
 ### From source
 
 Clone the repository:
