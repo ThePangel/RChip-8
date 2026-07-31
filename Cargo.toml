@@ -2,9 +2,23 @@
 name = "rchip-8"
 version = "0.1.0"
 edition = "2024"
+description = "A Chip-8 emulator"
+authors = [ "ThePangel" ]
+license = "GPL-3.0"
+repository = "https://github.com/ThePangel/RChip-8"
+homepage = "https://github.com/ThePangel/RChip-8"
+readme = "README.md"
+exclude = [ "target/" , ".git/" , ".gitignore", "*.log"]
 
 [dependencies]
 pixels = "0.17.2"
 rand = "0.10.2"
 rodio = "0.22.2"
 winit = "0.30.13"
+
+[profile.release]
+lto = true
+opt-level = "z"
+codegen-units = 1
+panic = "abort"
+strip = true
